@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catch the Santas</title>
+  <title>Catch the Presents</title>
   <style>
     body {
       display: flex;
@@ -31,12 +31,18 @@
       margin-bottom: 20px;
     }
 
-    #score {
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      width: 400px;
+      margin: 20px 0;
+    }
+
+    #score, #timer {
       font-size: 1.5rem;
       font-weight: bold;
       color: #004d00;
       text-shadow: 1px 1px 3px #fff;
-      margin: 20px 0;
     }
 
     #controls {
@@ -59,11 +65,6 @@
       color: white;
       box-shadow: 0 5px #002d00;
       transition: all 0.2s;
-    }
-
-    #controls button:active {
-      box-shadow: none;
-      transform: translateY(4px);
     }
 
     #button-container {
@@ -96,17 +97,16 @@
       color: white;
       box-shadow: 0 5px #b21f2d;
     }
-
-    #button-container button:active {
-      box-shadow: none;
-      transform: translateY(4px);
-    }
   </style>
 </head>
 <body>
-  <h1>🎅 Catch the Santas 🎁</h1>
+  <h1>🎅 Catch the Presents 🎁</h1>
   <canvas id="gameCanvas" width="400" height="500"></canvas>
-  <div id="score">Score: 0</div>
+  
+  <div class="game-info">
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 60</div>
+  </div>
   
   <div id="controls">
     <button id="move-left">⬅️ Move Left</button>
@@ -125,40 +125,41 @@
     const stopBtn = document.getElementById("stop-btn");
     const moveLeftBtn = document.getElementById("move-left");
     const moveRightBtn = document.getElementById("move-right");
+    const timerDisplay = document.getElementById("timer");
 
-    let santa = { x: 175, y: 430, width: 50, height: 50 };
+    let santa = { 
+      x: 175, 
+      y: 430, 
+      width: 60, 
+      height: 80,
+      targetX: 175,
+      speed: 5
+    };
     let gifts = [];
     let score = 0;
     let gameInterval;
     let isGameRunning = false;
+    let timeLeft = 60;
+    let timerInterval;
 
     // Load images
     const santaImg = new Image();
-    santaImg.src = "https://cdn-icons-png.flaticon.com/512/738/738096.png";  // Using a reliable cartoon Santa image
+    // Replace this with your local image path
+    santaImg.src = "santa.jpg";  // Put your Santa image in the same folder
 
     const fallingSantaImg = new Image();
-    fallingSantaImg.src = "https://cdn-icons-png.flaticon.com/512/738/738096.png";  // Same image for falling Santas
+    fallingSantaImg.src = santaImg.src;
 
-    // Make sure images are loaded before starting
-    let imagesLoaded = 0;
-    function handleImageLoad() {
-      imagesLoaded++;
-      if (imagesLoaded === 2) {
-        startBtn.disabled = false;
+    // Smooth movement
+    function updateSantaPosition() {
+      if (santa.x < santa.targetX) {
+        santa.x += santa.speed;
+        if (santa.x > santa.targetX) santa.x = santa.targetX;
+      } else if (santa.x > santa.targetX) {
+        santa.x -= santa.speed;
+        if (santa.x < santa.targetX) santa.x = santa.targetX;
       }
     }
-
-    function handleImageError() {
-      alert("Error loading Santa image. Using backup image...");
-      // You can add a backup image URL here if needed
-    }
-
-    santaImg.onload = handleImageLoad;
-    santaImg.onerror = handleImageError;
-    fallingSantaImg.onload = handleImageLoad;
-    fallingSantaImg.onerror = handleImageError;
-    
-    startBtn.disabled = true;  // Disable until images load
 
     function drawSanta() {
       ctx.drawImage(santaImg, santa.x, santa.y, santa.width, santa.height);
@@ -170,6 +171,14 @@
       });
     }
 
+    function updateTimer() {
+      timeLeft--;
+      timerDisplay.textContent = `Time: ${timeLeft}`;
+      if (timeLeft <= 0) {
+        stopGame();
+      }
+    }
+
     function spawnGift() {
       const x = Math.random() * (canvas.width - 40);
       gifts.push({ x, y: 0 });
@@ -177,6 +186,7 @@
 
     function updateGame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      updateSantaPosition();
       drawSanta();
       drawGifts();
       gifts.forEach(gift => (gift.y += 3));
@@ -207,24 +217,33 @@
       if (!isGameRunning) {
         isGameRunning = true;
         score = 0;
+        timeLeft = 60;
         gifts = [];
+        santa.x = 175;
+        santa.targetX = 175;
         gameInterval = setInterval(() => {
           updateGame();
           if (Math.random() < 0.02) spawnGift();
         }, 20);
+        timerInterval = setInterval(updateTimer, 1000);
       }
     }
 
     function stopGame() {
       clearInterval(gameInterval);
+      clearInterval(timerInterval);
       isGameRunning = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      gifts = [];
+      timeLeft = 60;
+      timerDisplay.textContent = `Time: ${timeLeft}`;
     }
 
     function moveSanta(direction) {
-      if (direction === "left" && santa.x > 0) {
-        santa.x -= 20;
-      } else if (direction === "right" && santa.x < canvas.width - santa.width) {
-        santa.x += 20;
+      if (direction === "left") {
+        santa.targetX = Math.max(0, santa.targetX - 20);
+      } else if (direction === "right") {
+        santa.targetX = Math.min(canvas.width - santa.width, santa.targetX + 20);
       }
     }
 
