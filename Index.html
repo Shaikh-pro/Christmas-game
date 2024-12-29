@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catch the Santas</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: linear-gradient(to bottom, #f5e1e1, #ffffff);
+      color: #333;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      margin: 20px 0;
+      font-size: 2rem;
+      color: #b30000;
+      text-shadow: 2px 2px 5px white;
+    }
+
+    #gameCanvas {
+      border: 4px solid #b30000;
+      background: #fff;
+      box-shadow: 0px 0px 20px rgba(255, 0, 0, 0.7);
+      margin-bottom: 20px;
+    }
+
+    #score {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #004d00;
+      text-shadow: 1px 1px 3px #fff;
+      margin: 20px 0;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    #controls button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background-color: #004d00;
+      color: white;
+      box-shadow: 0 5px #002d00;
+      transition: all 0.2s;
+    }
+
+    #controls button:active {
+      box-shadow: none;
+      transform: translateY(4px);
+    }
+
+    #button-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 20px;
+    }
+
+    #button-container button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #start-btn {
+      background-color: #28a745;
+      color: white;
+      box-shadow: 0 5px #1e7e34;
+    }
+
+    #stop-btn {
+      background-color: #dc3545;
+      color: white;
+      box-shadow: 0 5px #b21f2d;
+    }
+
+    #button-container button:active {
+      box-shadow: none;
+      transform: translateY(4px);
+    }
+  </style>
+</head>
+<body>
+  <h1>🎅 Catch the Santas 🎁</h1>
+  <canvas id="gameCanvas" width="400" height="500"></canvas>
+  <div id="score">Score: 0</div>
+  
+  <div id="controls">
+    <button id="move-left">⬅️ Move Left</button>
+    <button id="move-right">➡️ Move Right</button>
+  </div>
+  
+  <div id="button-container">
+    <button id="start-btn" class="start">Start Game</button>
+    <button id="stop-btn" class="stop">Stop Game</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startBtn = document.getElementById("start-btn");
+    const stopBtn = document.getElementById("stop-btn");
+    const moveLeftBtn = document.getElementById("move-left");
+    const moveRightBtn = document.getElementById("move-right");
+
+    let santa = { x: 175, y: 430, width: 50, height: 50 };
+    let gifts = [];
+    let score = 0;
+    let gameInterval;
+    let isGameRunning = false;
+
+    // Load images
+    const santaImg = new Image();
+    santaImg.src = "https://cdn-icons-png.flaticon.com/512/738/738096.png";  // Using a reliable cartoon Santa image
+
+    const fallingSantaImg = new Image();
+    fallingSantaImg.src = "https://cdn-icons-png.flaticon.com/512/738/738096.png";  // Same image for falling Santas
+
+    // Make sure images are loaded before starting
+    let imagesLoaded = 0;
+    function handleImageLoad() {
+      imagesLoaded++;
+      if (imagesLoaded === 2) {
+        startBtn.disabled = false;
+      }
+    }
+
+    function handleImageError() {
+      alert("Error loading Santa image. Using backup image...");
+      // You can add a backup image URL here if needed
+    }
+
+    santaImg.onload = handleImageLoad;
+    santaImg.onerror = handleImageError;
+    fallingSantaImg.onload = handleImageLoad;
+    fallingSantaImg.onerror = handleImageError;
+    
+    startBtn.disabled = true;  // Disable until images load
+
+    function drawSanta() {
+      ctx.drawImage(santaImg, santa.x, santa.y, santa.width, santa.height);
+    }
+
+    function drawGifts() {
+      gifts.forEach(gift => {
+        ctx.drawImage(fallingSantaImg, gift.x, gift.y, 40, 40);
+      });
+    }
+
+    function spawnGift() {
+      const x = Math.random() * (canvas.width - 40);
+      gifts.push({ x, y: 0 });
+    }
+
+    function updateGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSanta();
+      drawGifts();
+      gifts.forEach(gift => (gift.y += 3));
+      checkCollision();
+      displayScore();
+    }
+
+    function checkCollision() {
+      gifts = gifts.filter(gift => {
+        if (
+          gift.x < santa.x + santa.width &&
+          gift.x + 40 > santa.x &&
+          gift.y < santa.y + santa.height &&
+          gift.y + 40 > santa.y
+        ) {
+          score += 10;
+          return false;
+        }
+        return gift.y < canvas.height;
+      });
+    }
+
+    function displayScore() {
+      document.getElementById("score").innerText = `Score: ${score}`;
+    }
+
+    function startGame() {
+      if (!isGameRunning) {
+        isGameRunning = true;
+        score = 0;
+        gifts = [];
+        gameInterval = setInterval(() => {
+          updateGame();
+          if (Math.random() < 0.02) spawnGift();
+        }, 20);
+      }
+    }
+
+    function stopGame() {
+      clearInterval(gameInterval);
+      isGameRunning = false;
+    }
+
+    function moveSanta(direction) {
+      if (direction === "left" && santa.x > 0) {
+        santa.x -= 20;
+      } else if (direction === "right" && santa.x < canvas.width - santa.width) {
+        santa.x += 20;
+      }
+    }
+
+    startBtn.addEventListener("click", startGame);
+    stopBtn.addEventListener("click", stopGame);
+    moveLeftBtn.addEventListener("click", () => moveSanta("left"));
+    moveRightBtn.addEventListener("click", () => moveSanta("right"));
+
+    window.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft") {
+        moveSanta("left");
+      } else if (event.key === "ArrowRight") {
+        moveSanta("right");
+      }
+    });
+  </script>
+</body>
+</html>
