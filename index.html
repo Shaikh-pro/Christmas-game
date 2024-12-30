@@ -142,15 +142,15 @@
     let timeLeft = 60;
     let timerInterval;
 
-    // Load images
+    
     const santaImg = new Image();
-    // Replace this with your local image path
-    santaImg.src = "Santa.jpg";  // Put your Santa image in the same folder
+    
+    santaImg.src = "Santa.jpg";  
 
     const fallingSantaImg = new Image();
     fallingSantaImg.src = santaImg.src;
 
-    // Smooth movement
+    
     function updateSantaPosition() {
       if (santa.x < santa.targetX) {
         santa.x += santa.speed;
