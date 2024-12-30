@@ -117,7 +117,7 @@
     <button id="start-btn" class="start">Start Game</button>
     <button id="stop-btn" class="stop">Stop Game</button>
   </div>
-
+   
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
@@ -259,6 +259,10 @@
         moveSanta("right");
       }
     });
+    // Optionally, control music playback
+    const bgMusic = document.getElementById('bg-music');
+    startBtn.addEventListener("click", () => bgMusic.play());
+    stopBtn.addEventListener("click", () => bgMusic.pause());
   </script>
 </body>
 </html>
